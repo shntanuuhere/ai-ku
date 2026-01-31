@@ -93,10 +93,8 @@ export default function Terminal() {
           }, 300)
         }
       }
-    }
-    
-    // Auto-start wake word listening on page load
-    if (recognitionRef.current) {
+      
+      // Auto-start wake word listening on page load (only once)
       addLine('👂 Listening for "Hey Stewie" to wake...', 'system')
       addLine('', 'normal')
       setIsListeningForWakeWord(true)
@@ -105,8 +103,30 @@ export default function Terminal() {
       }, 1000)
     }
 
-    return () => clearInterval(interval)
-  }, [isVoiceMode, isSpeaking, isListeningForWakeWord])
+    return () => {
+      clearInterval(interval)
+      // Cleanup speech recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch(e) {}
+      }
+    }
+  }, []) // Empty deps - runs only once on mount
+
+  // Separate effect for handling speech recognition state changes
+  useEffect(() => {
+    if (!recognitionRef.current) return
+
+    if (isVoiceMode || isListeningForWakeWord) {
+      // Recognition should be running
+    } else {
+      // Stop recognition when not in voice mode
+      try {
+        recognitionRef.current.stop()
+      } catch(e) {}
+    }
+  }, [isVoiceMode, isListeningForWakeWord])
 
   const addLine = (text: string, type: string = 'normal') => {
     if (!terminalBodyRef.current) return
@@ -477,22 +497,23 @@ export default function Terminal() {
           autoFocus
         />
         {isSpeaking && (
-          <button type="button" className="stop-btn active" onClick={stopSpeaking}>
-            ⏹ Stop
+          <button type="button" className="stop-btn active" onClick={stopSpeaking} title="Stop Speaking">
+            ⏹
           </button>
         )}
-        <button type="button" className="personality-btn" onClick={analyzeCluster}>
-          🧠 Analyze
+        <button type="button" className="personality-btn" onClick={analyzeCluster} title="Analyze Cluster">
+          🧠
         </button>
-        <button type="button" className="personality-btn" onClick={cyclePersonality}>
-          🎭 Mode
+        <button type="button" className="personality-btn" onClick={cyclePersonality} title="Change Personality">
+          🎭
         </button>
         <button
           type="button"
           className={`voice-btn ${isVoiceMode ? 'active' : ''} ${isListeningForWakeWord ? 'sleeping' : ''}`}
           onClick={toggleVoiceMode}
+          title={isVoiceMode ? 'Stop Voice Mode' : isListeningForWakeWord ? 'Sleeping - Say Hey Stewie' : 'Start Voice Mode'}
         >
-          {isVoiceMode ? '🔴 Stop' : isListeningForWakeWord ? '💤 Sleeping' : '🎤 Voice'}
+          {isVoiceMode ? '🔴' : isListeningForWakeWord ? '💤' : '🎤'}
         </button>
       </form>
     </div>
