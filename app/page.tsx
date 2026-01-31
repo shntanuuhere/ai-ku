@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './terminal.css'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://35.212.144.149:5001'
+const API_URL = '' // Use relative URLs to call Next.js API routes
 
 export default function Terminal() {
   const [input, setInput] = useState('')
